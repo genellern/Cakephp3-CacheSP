@@ -18,14 +18,17 @@ Many calls to stored procedures are dirty and confusing, so I tried to put this 
 
 - Load it in your table.
 - $this->addBehavior('CacheSP');
-- Call your procedure.
-	$this->callSP('party_roles_relate', ['partyId'=>$partyId, 'roleName'=>User::$rolCode]);
-- This will generate a query like this:
-	CALL party_roles_relate('1', 'USER')
-- A description of my procedure.
-	CREATE PROCEDURE `party_roles_relate`(IN roleName varchar (45), IN partyId int(11))
+- Call your procedure:
 
-	As you can see, order doesn't matter anymore :)
+	`$this->callSP('party_roles_relate', ['partyId'=>$partyId, 'roleName'=>User::$rolCode]);`
+- This will generate a query like this:
+	
+	`CALL party_roles_relate('1', 'USER')`
+- A description of my procedure.
+
+	`CREATE PROCEDURE party_roles_relate (IN roleName varchar (45), IN partyId int(11))`
+
+	NOTE: As you can see, order doesn't matter anymore :)
 - Enjoy.
 
 
