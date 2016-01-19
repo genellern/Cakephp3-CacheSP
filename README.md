@@ -24,7 +24,7 @@ Many calls to stored procedures are dirty and confusing, so I tried to put this 
 	`$this->callSP('party_roles_relate', ['partyId'=>$partyId, 'roleName'=>User::$rolCode]);`
 - This will generate a query like this:
 	
-	`CALL party_roles_relate('1', 'USER')`
+	`CALL party_roles_relate('USER', '1')`
 - A description of my procedure.
 
 	`CREATE PROCEDURE party_roles_relate (IN roleName varchar (45), IN partyId int(11))`
