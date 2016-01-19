@@ -17,7 +17,8 @@ Many calls to stored procedures are dirty and confusing, so I tried to put this 
 ## Usage
 
 - Load it in your table.
-- $this->addBehavior('CacheSP');
+
+        `$this->addBehavior('CacheSP');`
 - Call your procedure:
 
 	`$this->callSP('party_roles_relate', ['partyId'=>$partyId, 'roleName'=>User::$rolCode]);`
