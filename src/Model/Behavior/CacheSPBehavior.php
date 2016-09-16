@@ -1,7 +1,8 @@
 <?php
 /**
- * @author Geneller Naranjo
- * This behavior caches parameters so that order and sql string are no longer at use and provides an easier way to call SPs.
+ *
+ * @author Geneller Naranjo This behavior caches parameters so that order and sql string are no longer at use and
+ * provides an easier way to call SPs.
  */
 namespace App\Model\Behavior;
 
@@ -11,100 +12,115 @@ use Cake\Database\Schema\Table;
 use Cake\Database\Query;
 use Cake\Event\Event;
 use Cake\ORM\Entity;
+use Cake\Log\Log;
 use Cake\Cache\Cache;
+use Cake\Database\Expression\FunctionExpression;
 
-class CacheSPBehavior extends Behavior {
+class CacheSPBehavior extends Behavior
+{
+    /**
+     * Behavior settings
+     *
+     * @access public
+     * @var array
+     */
+    public $settings = [];
 
-	/**
-	 * Behavior settings
-	 *
-	 * @access public
-	 * @var array
-	 */
-	public $settings = [];
+    /**
+     * Default values for settings.
+     *
+     * @access private
+     * @var array
+     */
+    private $defaults = [];
 
-	/**
-	 * Default values for settings.
-	 *
-	 * @access private
-	 * @var array
-	 */
-	private $defaults = [];
-	private $_tableObject = NULL;
+    private $tableObject = null;
 
-	/**
-	 * Initialize method
-	 *
-	 * @see \Cake\ORM\Behavior::initialize()
-	 */
-	public function initialize(array $config) {
-		$this->_tableObject = $this->_table;
-		$this->settings = array_merge($this->defaults, $config);
-		parent::initialize($this->settings);
-	}
+    /**
+     * Initialize method
+     *
+     * @see \Cake\ORM\Behavior::initialize()
+     */
+    public function initialize(array $config)
+    {
+        $this->tableObject = $this->_table;
+        $conn = $this->tableObject->connection();
+        $this->settings = array_merge($this->defaults, $config);
+        parent::initialize($this->settings);
+    }
 
-	/**
-	 * Call the procedure with its parameters.
-	 * @param String $spName SP name
-	 * @param Array|null $paramValues Array with values to the SP.
-	 * 	the array index is the parameter name in the description of the SP
-	 *  the value is the value to be passed.
-	 * @return \Cake\Database\StatementInterface executed statement
-	 */
-	public function callSP($spName, $paramValues = null) {
-		$values = $this->_arrangeParameters($spName, $paramValues);
-		if (! empty($values)) {
-			$values = "'" . join("', '", $values) . "'";
-		} else {
-			$values = '';
-		}
+    /**
+     * Call the procedure with its parameters.
+     *
+     * @param String $spName SP name
+     * @param Array|null $paramValues Array with values to the SP. the array index is the parameter name in the
+     * description of the SP the value is the value to be passed.
+     * @return \Cake\Database\StatementInterface executed statement
+     */
+    public function callSP($spName, $paramValues = null)
+    {
+        $values = $this->arrangeParameters($spName, $paramValues);
+        if (!empty($values)) {
+            $values = "'" . join("', '", $values) . "'";
+        } else {
+            $values = '';
+        }
 
-		$conn = $this->_tableObject->connection();
-		return $conn->execute("CALL {$spName} ($values)");
-	}
+        $conn = $this->tableObject->connection();
+        return $conn->execute("CALL {$spName} ($values)");
+    }
 
-	/**
-	 * Get parameters from cache, if they're not cached already, then it creates parameters in cache.
-	 * @param Strng $spName
-	 * @return Array $parameters
-	 */
-	private function _getParameters($spName) {
-		if (($parameters = Cache::read($spName)) === false) {
-			$query = $this->_tableObject->query();
-			$query = $query->select('information_schema.parameters.PARAMETER_NAME')->from('information_schema.parameters')->where([
-				'SPECIFIC_NAME' => $spName
-			]);
-			$parameters = [];
-			foreach ($query as $parameter) {
-				$parameters[] = $parameter->information_schema['parameters'];
-			}
-			$this->_saveParameters($spName, $parameters);
-		}
-		return $parameters;
-	}
+    /**
+     * Get parameters from cache, if they're not cached already, then it creates parameters in cache.
+     *
+     * @param Strng $spName
+     * @return Array $parameters
+     */
+    private function getParameters($spName)
+    {
+        if (($parameters = Cache::read($spName)) === false) {
+            $query = $this->tableObject->query();
+            $conn = $this->tableObject->connection();
+            $config = $conn->config();
+            $query = $query->select('information_schema.parameters.PARAMETER_NAME')
+                ->from('information_schema.parameters')
+                ->where(
+                    ['SPECIFIC_NAME' => $spName, 'SPECIFIC_SCHEMA' => $config['database']]
+                );
+            $parameters = [];
+            foreach ($query as $parameter) {
+                $parameters[] = $parameter->information_schema['parameters'];
+            }
+            $this->saveParameters($spName, $parameters);
+        }
+        return $parameters;
+    }
 
-	/**
-	 * Arrange parameters in the order described in the SQL definition of the procedure.
-	 * @param String $spName
-	 * @param Array $paramValues
-	 * @return Array $values
-	 */
-	private function _arrangeParameters($spName, $paramValues) {
-		$values = [];
-		$parameters = $this->_getParameters($spName);
-		foreach ($parameters as $parameter) {
+    /**
+     * Arrange parameters in the order described in the SQL definition of the procedure.
+     *
+     * @param String $spName
+     * @param Array $paramValues
+     * @return Array $values
+     */
+    private function arrangeParameters($spName, $paramValues)
+    {
+        $values = [];
+        $parameters = $this->getParameters($spName);
+        foreach ($parameters as $parameter) {
+            $values[] = $paramValues[$parameter];
+        }
+        return $values;
+    }
 
-			$values[] = $paramValues[$parameter];
-		}
-		return $values;
-	}
-
-	/**
-	 * Save parameters to cache, key is the SP name.
-	 * @param String $spName
-	 * @param Array $parameters
-	 */
-	private function _saveParameters($spName, $parameters) {
-		Cache::write($spName, $parameters);
-	}
+    /**
+     * Save parameters to cache, key is the SP name.
+     *
+     * @param String $spName
+     * @param Array $parameters
+     */
+    private function saveParameters($spName, $parameters)
+    {
+        Cache::write($spName, $parameters);
+    }
 }
