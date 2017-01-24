@@ -60,12 +60,7 @@ class CacheSPBehavior extends Behavior
     public function callSP($spName, $paramValues = null)
     {
         $values = $this->arrangeParameters($spName, $paramValues);
-        if (!empty($values)) {
-            $values = "'" . join("', '", $values) . "'";
-        } else {
-            $values = '';
-        }
-
+        $values = join(", ", $values);
         $conn = $this->tableObject->connection();
         return $conn->execute("CALL {$spName} ($values)");
     }
@@ -108,7 +103,11 @@ class CacheSPBehavior extends Behavior
         $values = [];
         $parameters = $this->getParameters($spName);
         foreach ($parameters as $parameter) {
-            $values[] = $paramValues[$parameter];
+            if ($paramValues[$parameter] instanceof FunctionExpression) {
+                $values[] = ($paramValues[$parameter])->sql(new \Cake\Database\ValueBinder);
+            } else {
+                $values[] = "'" . $paramValues[$parameter] . "'";
+            }
         }
         return $values;
     }
