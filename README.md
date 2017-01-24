@@ -25,7 +25,10 @@ Many calls to stored procedures are dirty and confusing, so I tried to put this 
 
     Call it with expressions:
 
+    Create the query object.
     `$query = $this->find();`
+
+    Create the expression and pass it.
     `$this->callSP('party_roles_last_request', ['partyId'=>$partyId, 'updateTime'=>$query->func()->now(), 'roleName'=>User::$rolCode]);`
 
 - This will generate a query like this:
