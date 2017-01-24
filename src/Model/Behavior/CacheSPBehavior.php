@@ -3,7 +3,7 @@
  * @author Geneller Naranjo
  * This behavior caches parameters so that order and sql string are no longer at use and provides an easier way to call SPs.
  */
-namespace App\Model\Behavior;
+namespace CacheSP\Model\Behavior;
 
 use Cake\ORM\Behavior;
 use Cake\ORM\TableRegistry;

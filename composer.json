@@ -1,0 +1,19 @@
+{
+    "name" : "Mysql Cache SP",
+    "descriptions": "The behavior caches parameters by name and makes calls to Mysql stored procedures in a clean and more readable way.",
+    "type": "cakephp-behavior",
+    "keywords": ["cakephp", "behavior", "MySQL", "stored", "procedure"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Geneller Naranjo",
+            "homepage": "https://github.com/genellern",
+            "role": "Author"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "CacheSP\\": "src"
+        }
+    },
+}
