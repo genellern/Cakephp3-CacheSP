@@ -1,5 +1,5 @@
 {
-    "name" : "genellern/Mysql_Cache_SP",
+    "name" : "genellern/mysql_cache_sp",
     "description": "The behavior caches parameters by name and makes calls to Mysql stored procedures in a clean and more readable way.",
     "type": "cakephp-behavior",
     "keywords": ["cakephp", "behavior", "MySQL", "stored", "procedure"],
